@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Recurring Bills</title>
 <link rel="icon" type="image/png" href="./icon.png">
 <link rel="apple-touch-icon" href="./icon.png">
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#12345b">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>My Recurring Bills</title>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#687386;--line:#e4e8ef;--accent:#4f46e5;--green:#16834b;--red:#c0392b;--shadow:0 8px 24px rgba(20,30,50,.07)}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
@@ -21,7 +21,7 @@ button{cursor:pointer;border:0!important;font-weight:650}.primary{background:var
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;padding:20px}.modal.show{display:flex}.modalbox{background:#fff;border-radius:18px;padding:24px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2)}.modalbox h2{margin-top:0}.modalbox{max-height:92vh;overflow:auto}.notes-cell{max-width:230px;white-space:pre-wrap;overflow-wrap:anywhere}
 .form{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{display:flex;flex-direction:column;gap:6px}.full{grid-column:1/-1}.field label{font-size:13px;font-weight:650}.field input,.field select,.field textarea{padding:11px;border:1px solid var(--line);border-radius:9px;font:inherit}.check{display:flex;align-items:center;gap:8px}.modalactions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
 @media(max-width:800px){.top{grid-template-columns:1fr 1fr}header{align-items:flex-start;flex-direction:column}}@media(max-width:500px){.top{grid-template-columns:1fr}.form{grid-template-columns:1fr}}
-.authbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.authbox{max-width:450px;margin:45px auto}.authbox input{width:100%;padding:12px;margin:7px 0 14px;border:1px solid var(--line);border-radius:9px}.authbox button{padding:12px}.notice{padding:12px 15px;background:#eef2ff;border-radius:10px;margin-bottom:16px}.error{color:#a32222}.muted{color:var(--muted);font-size:13px}.hidden{display:none!important}
+.authbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.authbox{max-width:450px;margin:45px auto}.authbox input{width:100%;padding:12px;margin:7px 0 14px;border:1px solid var(--line);border-radius:9px}.authbox button{padding:12px}.notice{padding:12px 15px;background:#eef2ff;border-radius:10px;margin-bottom:16px}.error{color:#a32222}.muted{color:var(--muted);font-size:13px}.hidden{display:none!important}.feature-tabs{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}.feature-tabs button{padding:11px 16px;border-radius:10px;background:#fff}.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.calendar-day{min-height:76px;border:1px solid var(--line);border-radius:9px;padding:6px;background:#fff;text-align:left;font-size:12px;overflow:hidden}.calendar-day strong{display:block}.calendar-day.has-bills{background:#eef2ff}.calendar-day.today{outline:2px solid var(--accent)}.calendar-day .tiny{display:block;font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.calendar-head{text-align:center;font-size:12px;font-weight:bold}.report-line{display:grid;grid-template-columns:95px 1fr 105px;gap:12px;align-items:center;margin:14px 0}.bar-track{height:15px;background:#e9edf5;border-radius:8px;overflow:hidden}.bar-paid{background:#16834b;height:100%;float:left}.bar-due{background:#4f46e5;height:100%;float:left}.reminder-item{padding:12px;border-bottom:1px solid var(--line)}@media(max-width:500px){.calendar-day{min-height:62px;padding:3px}.calendar-day .tiny{font-size:9px}.report-line{grid-template-columns:75px 1fr 80px;gap:6px}}
 </style>
 </head>
 <body>
@@ -37,13 +37,19 @@ button{cursor:pointer;border:0!important;font-weight:650}.primary{background:var
   <div class="toolbar">
     <input id="month" type="month" onchange="render()">
     <select id="filter" onchange="render()"><option value="all">All bills</option><option value="unpaid">Unpaid</option><option value="paid">Paid</option></select>
-    <input id="search" placeholder="Search bills..." oninput="render()">
+    <select id="frequencyFilter" onchange="render()"><option value="all">All frequencies</option><option>Weekly</option><option>Bi-weekly</option><option>Monthly</option><option>Quarterly</option><option>Yearly</option><option>One-time</option></select>
+    <select id="autopayFilter" onchange="render()"><option value="all">All payment types</option><option value="auto">Autopay</option><option value="manual">Manual</option></select>
+    <input id="search" placeholder="Search name, notes, payment method..." oninput="render()">
     <button onclick="exportData()">Export</button>
     <button onclick="document.getElementById('importFile').click()">Import</button>
     <input id="importFile" type="file" accept=".json" hidden onchange="importData(event)">
   </div>
-  <div class="card tablecard"><div class="tablewrap">
-    <table><thead><tr><th>Bill</th><th>Due</th><th>Amount</th><th>Paid With</th><th>Notes</th><th>Status</th><th>Actions</th></tr></thead>
+  <div class="feature-tabs"><button class="primary" onclick="showTab('list')" id="tab-list">Bills</button><button onclick="showTab('calendar')" id="tab-calendar">Calendar</button><button onclick="showTab('reports')" id="tab-reports">Reports</button><button onclick="showTab('reminders')" id="tab-reminders">Reminders</button></div>
+  <div id="calendarPanel" class="card hidden"><h2>Bill calendar</h2><div id="calendarGrid" class="calendar-grid"></div><p class="muted">Select a day to see its payments. Autopay bills still require confirmation before being marked paid.</p><div id="calendarDetails"></div></div>
+  <div id="reportsPanel" class="card hidden"><h2>Spending reports</h2><p class="muted">Scheduled totals, paid amounts, and remaining balances for the selected month and previous five months.</p><div id="reportRows"></div></div>
+  <div id="remindersPanel" class="card hidden"><h2>Upcoming payment reminders</h2><p class="muted">In-app reminders appear when you open the website. They are not background push notifications.</p><label>Remind me <select id="reminderDays" onchange="saveReminderDays()"><option value="1">1 day</option><option value="3">3 days</option><option value="7">7 days</option><option value="14">14 days</option></select> before due date</label><div id="reminderRows"></div></div>
+  <div id="listPanel" class="card tablecard"><div class="tablewrap">
+    <table><thead><tr><th>Bill</th><th>Due</th><th>Amount</th><th>Paid With</th><th>Notes</th><th>Autopay</th><th>Status</th><th>Actions</th></tr></thead>
     <tbody id="rows"></tbody></table>
   </div></div>
 </div>
@@ -58,7 +64,7 @@ button{cursor:pointer;border:0!important;font-weight:650}.primary{background:var
 <div class="field"><label>Amount</label><input id="amount" type="number" min="0" step="0.01" required placeholder="0.00"></div>
 <div class="field"><label>Paid with</label><input id="method" placeholder="Checking, Visa, Cash..."></div>
 <div class="field"><label>Frequency</label><select id="frequency"><option>Weekly</option><option>Bi-weekly</option><option selected>Monthly</option><option>Quarterly</option><option>Yearly</option><option>One-time</option></select></div><div class="field full"><label>Notes</label><textarea id="notes" rows="3" placeholder="Optional notes about this bill"></textarea></div>
-<div class="field full check"><input id="isPaid" type="checkbox"><label for="isPaid">Mark first payment as paid</label></div>
+<div class="field full check"><input id="autopay" type="checkbox"><label for="autopay">Automatic payment (autopay)</label></div><div class="field full check"><input id="isPaid" type="checkbox"><label for="isPaid">Mark first payment as paid</label></div>
 </div>
 <div class="modalactions"><button type="button" onclick="closeModal()">Cancel</button><button class="primary">Save Bill</button></div>
 </form></div></div>
@@ -75,8 +81,8 @@ function requireUser(){if(!currentUser){alert('Sign in first.');return false}ret
 async function submitAuth(e){e.preventDefault();if(!db)return authMessage('Supabase library failed to load. Check your internet connection.',true);const {error}=await db.auth.signInWithPassword({email:$('authEmail').value.trim(),password:$('authPassword').value});if(error)authMessage(error.message,true)}
 async function signUp(){if(!db)return authMessage('Supabase library failed to load.',true);const {error,data}=await db.auth.signUp({email:$('authEmail').value.trim(),password:$('authPassword').value});authMessage(error?error.message:(data.session?'Account created. Signing in…':'Account created. Check your email for a confirmation link.'),!!error)}
 async function signOut(){if(db)await db.auth.signOut()}
-function cloudBill(b){return {id:b.id,user_id:currentUser.id,name:b.name,amount:b.amount,due_date:b.due,frequency:({'Weekly':'weekly','Bi-weekly':'biweekly','Monthly':'monthly','Quarterly':'quarterly','Yearly':'yearly','One-time':'one-time'})[b.frequency],paid_with:b.method||'',notes:b.notes||''}}
-function fromCloudBill(b){return {id:b.id,name:b.name,amount:Number(b.amount),due:b.due_date,frequency:({'weekly':'Weekly','biweekly':'Bi-weekly','monthly':'Monthly','quarterly':'Quarterly','yearly':'Yearly','one-time':'One-time'})[b.frequency]||'Monthly',method:b.paid_with||'',notes:b.notes||''}}
+function cloudBill(b){return {id:b.id,user_id:currentUser.id,name:b.name,amount:b.amount,due_date:b.due,frequency:({'Weekly':'weekly','Bi-weekly':'biweekly','Monthly':'monthly','Quarterly':'quarterly','Yearly':'yearly','One-time':'one-time'})[b.frequency],paid_with:b.method||'',notes:b.notes||'',autopay:!!b.autopay}}
+function fromCloudBill(b){return {id:b.id,name:b.name,amount:Number(b.amount),due:b.due_date,frequency:({'weekly':'Weekly','biweekly':'Bi-weekly','monthly':'Monthly','quarterly':'Quarterly','yearly':'Yearly','one-time':'One-time'})[b.frequency]||'Monthly',method:b.paid_with||'',notes:b.notes||'',autopay:!!b.autopay}}
 function cloudPayment(key,ov){const i=key.lastIndexOf('|'),id=key.slice(0,i),due=key.slice(i+1);const bill=bills.find(b=>b.id===id);return {bill_id:id,user_id:currentUser.id,due_date:due,amount:ov.amount===undefined?bill.amount:Number(ov.amount),paid:!!ov.paid,paid_at:ov.paid?new Date().toISOString():null,paid_with:ov.method===undefined?bill.method:ov.method,notes:ov.notes===undefined?bill.notes:ov.notes}}
 async function fetchCloud(){if(!currentUser||busy)return;const [a,b]=await Promise.all([db.from('bills').select('*').eq('user_id',currentUser.id),db.from('bill_payments').select('*').eq('user_id',currentUser.id)]);if(a.error||b.error){status('Cloud load failed: '+(a.error||b.error).message,true);return}bills=a.data.map(fromCloudBill);payments={};for(const x of b.data){payments[paymentKey(x.bill_id,x.due_date)]={paid:x.paid,amount:Number(x.amount),method:x.paid_with||'',notes:x.notes||''}}render();status('Cloud synced · '+new Date().toLocaleTimeString());$('migration').classList.toggle('hidden',!localBills().length)}
 async function mutate(work){if(!requireUser()||busy)return;busy=true;status('Saving to cloud…');try{await work();busy=false;await fetchCloud()}catch(e){busy=false;status('Could not save: '+e.message,true);alert('Cloud save failed: '+e.message)}}
@@ -140,13 +146,14 @@ function editBill(id){
  $('modalTitle').textContent='Edit Recurring Bill';$('editId').value=b.id;
  $('name').value=b.name;$('due').value=b.due;$('amount').value=b.amount;
  $('method').value=b.method;$('frequency').value=b.frequency;$('notes').value=b.notes||'';
+ $('autopay').checked=!!b.autopay;
  $('isPaid').checked=!!(payments[paymentKey(b.id,b.due)]||{}).paid;
  $('modal').classList.add('show');
 }
 function closeModal(){$('modal').classList.remove('show')}
 async function saveBill(e){
  e.preventDefault();if(!requireUser())return;const id=$('editId').value||uid();
- const b={id,name:$('name').value.trim(),due:$('due').value,amount:Number($('amount').value),method:$('method').value.trim(),frequency:$('frequency').value,notes:$('notes').value.trim()};
+ const b={id,name:$('name').value.trim(),due:$('due').value,amount:Number($('amount').value),method:$('method').value.trim(),frequency:$('frequency').value,notes:$('notes').value.trim(),autopay:$('autopay').checked};
  if(!b.name||!b.due||!Number.isFinite(b.amount)||b.amount<0)return;
  const old=bills.find(x=>x.id===id);
  if(old&&(old.due!==b.due||old.frequency!==b.frequency)&&!confirm('Changing the schedule may change future payment dates. Existing payment history will be retained. Continue?'))return;
@@ -157,18 +164,67 @@ async function togglePaid(id,due){const b=bills.find(x=>x.id===id);if(!b)return;
 async function editPayment(id,due){const b=bills.find(x=>x.id===id);if(!b)return;const ov=payments[paymentKey(id,due)]||{};const amount=prompt('Amount for this payment:',String(ov.amount??b.amount));if(amount===null)return;const n=Number(amount);if(!Number.isFinite(n)||n<0){alert('Enter a valid amount.');return}const method=prompt('Paid with for this payment:',String(ov.method??b.method));if(method===null)return;const notes=prompt('Notes for this payment:',String(ov.notes??b.notes??''));if(notes===null)return;await mutate(async()=>assertOk(await db.from('bill_payments').upsert({bill_id:id,user_id:currentUser.id,due_date:due,amount:n,paid:!!ov.paid,paid_at:ov.paid?new Date().toISOString():null,paid_with:method,notes},{onConflict:'bill_id,due_date'})))}
 async function deleteBill(id){const b=bills.find(x=>x.id===id);if(!b||!confirm(`Delete "${b.name}" and all its scheduled payments?`))return;await mutate(async()=>assertOk(await db.from('bills').delete().eq('id',id).eq('user_id',currentUser.id)))}
 function render(){
- const m=$('month').value||monthNow(),filter=$('filter').value,q=$('search').value.toLowerCase();
- const all=allForMonth(m),list=all.filter(b=>(filter==='all'||(filter==='paid'?b.paid:!b.paid))&&(!q||[b.name,b.method,b.notes].some(x=>String(x||'').toLowerCase().includes(q))));
+ const m=$('month').value||monthNow(),filter=$('filter').value,q=$('search').value.toLowerCase(),autof=$('autopayFilter').value,freq=$('frequencyFilter').value;
+ const all=allForMonth(m),list=all.filter(b=>(filter==='all'||(filter==='paid'?b.paid:!b.paid))&&(autof==='all'||(autof==='auto'?b.autopay:!b.autopay))&&(freq==='all'||b.frequency===freq)&&(!q||[b.name,b.method,b.notes,b.frequency].some(x=>String(x||'').toLowerCase().includes(q))));
  const total=all.reduce((s,b)=>s+b.amount,0),paid=all.filter(b=>b.paid).reduce((s,b)=>s+b.amount,0);
  $('total').textContent=money(total);$('paid').textContent=money(paid);$('remaining').textContent=money(total-paid);$('count').textContent=all.length;
+ if(activeTab==='calendar')renderCalendar();if(activeTab==='reports')renderReports();if(activeTab==='reminders')renderReminders();
  $('rows').innerHTML=list.length?list.map(b=>{
    const overdue=!b.paid&&b.due<todayISO();
    const status=b.paid?'<span class="status paid">✓ Paid</span>':overdue?'<span class="status unpaid">Overdue</span>':'<span class="status due">Due</span>';
    const nice=dateUTC(b.due).toLocaleDateString('en-US',{timeZone:'UTC',month:'short',day:'numeric',year:'numeric'});
    const id=JSON.stringify(b.id),due=JSON.stringify(b.due);
-   return `<tr><td><strong>${esc(b.name)}</strong><br><small>${esc(b.frequency)}</small></td><td>${nice}</td><td><strong>${money(b.amount)}</strong></td><td>${esc(b.method||'—')}</td><td class="notes-cell">${esc(b.notes||'—')}</td><td>${status}</td><td class="actions"><button onclick='togglePaid(${id},${due})'>${b.paid?'Mark unpaid':'Mark paid'}</button><button onclick='editPayment(${id},${due})'>Edit payment</button><button onclick='editBill(${id})'>Edit bill</button><button class="danger" onclick='deleteBill(${id})'>Delete</button></td></tr>`;
- }).join(''):'<tr><td colspan="7" class="empty">No payments scheduled for this month.</td></tr>';
+   return `<tr><td><strong>${esc(b.name)}</strong><br><small>${esc(b.frequency)}</small></td><td>${nice}</td><td><strong>${money(b.amount)}</strong></td><td>${esc(b.method||'—')}</td><td class="notes-cell">${esc(b.notes||'—')}</td><td>${b.autopay?'✓ On':'Manual'}</td><td>${status}</td><td class="actions"><button onclick='togglePaid(${id},${due})'>${b.paid?'Mark unpaid':'Mark paid'}</button><button onclick='editPayment(${id},${due})'>Edit payment</button><button onclick='editBill(${id})'>Edit bill</button><button class="danger" onclick='deleteBill(${id})'>Delete</button></td></tr>`;
+ }).join(''):'<tr><td colspan="8" class="empty">No payments scheduled for this month.</td></tr>';
 }
+
+let activeTab='list';
+function showTab(tab){
+ activeTab=tab;
+ for(const t of ['list','calendar','reports','reminders']){
+  $(t+'Panel').classList.toggle('hidden',tab!==t);
+  $('tab-'+t).classList.toggle('primary',tab===t);
+ }
+ render();
+}
+function renderCalendar(){
+ const month=$('month').value||monthNow(),[y,mo]=month.split('-').map(Number);
+ const first=new Date(Date.UTC(y,mo-1,1)).getUTCDay(),count=daysInMonth(y,mo-1),today=todayISO();
+ const grouped={};for(const b of allForMonth(month))(grouped[b.due]??=[]).push(b);
+ let out=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>`<div class="calendar-head">${x}</div>`).join('');
+ for(let i=0;i<first;i++)out+='<div></div>';
+ for(let day=1;day<=count;day++){
+  const date=month+'-'+pad(day),arr=grouped[date]||[];
+  out+=`<button class="calendar-day ${arr.length?'has-bills':''} ${date===today?'today':''}" onclick="showCalendarDay('${date}')"><strong>${day}</strong>${arr.slice(0,2).map(b=>`<span class="tiny">${b.paid?'✓ ':''}${esc(b.name)} ${money(b.amount)}</span>`).join('')}${arr.length>2?`<span class="tiny">+${arr.length-2} more</span>`:''}</button>`;
+ }
+ $('calendarGrid').innerHTML=out;
+ $('calendarDetails').innerHTML='<p class="muted">Tap a day to view its bills.</p>';
+}
+function showCalendarDay(date){
+ const arr=allForMonth(date.slice(0,7)).filter(b=>b.due===date);
+ $('calendarDetails').innerHTML=`<h3>${esc(date)}</h3>`+(arr.length?arr.map(b=>`<div class="reminder-item"><strong>${esc(b.name)}</strong> — ${money(b.amount)} · ${b.paid?'Paid':'Unpaid'} ${b.autopay?'· Autopay':''}</div>`).join(''):'<p>No bills due this day.</p>');
+}
+function renderReports(){
+ const month=$('month').value||monthNow(),[y,m]=month.split('-').map(Number);
+ const series=[];
+ for(let n=5;n>=0;n--){
+  const d=new Date(Date.UTC(y,m-1-n,1)),label=`${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}`,arr=allForMonth(label);
+  series.push({label,total:arr.reduce((a,b)=>a+b.amount,0),paid:arr.filter(b=>b.paid).reduce((a,b)=>a+b.amount,0)});
+ }
+ const max=Math.max(1,...series.map(x=>x.total));
+ $('reportRows').innerHTML=series.map(x=>`<div class="report-line"><strong>${x.label}</strong><div class="bar-track"><div class="bar-paid" style="width:${100*x.paid/max}%"></div><div class="bar-due" style="width:${100*(x.total-x.paid)/max}%"></div></div><span>${money(x.total)}</span></div><div class="muted">Paid ${money(x.paid)} · Remaining ${money(x.total-x.paid)}</div>`).join('');
+}
+function reminderDays(){return Number(localStorage.getItem('myBillsReminderDays')||'7')}
+function saveReminderDays(){localStorage.setItem('myBillsReminderDays',$('reminderDays').value);renderReminders()}
+function renderReminders(){
+ $('reminderDays').value=String(reminderDays());
+ const now=todayISO(),future=dateStr(new Date(dateUTC(now).getTime()+reminderDays()*86400000)),months=[now.slice(0,7),shiftMonths(now.slice(0,7)+'-01',1).slice(0,7)];
+ const list=months.flatMap(allForMonth).filter(b=>!b.paid&&b.due>=now&&b.due<=future).sort((a,b)=>a.due.localeCompare(b.due));
+ const overdueMonths=[0,1,2].map(n=>shiftMonths(now.slice(0,7)+'-01',-n).slice(0,7));
+ const overdue=overdueMonths.flatMap(allForMonth).filter(b=>!b.paid&&b.due<now).sort((a,b)=>a.due.localeCompare(b.due));
+ $('reminderRows').innerHTML=`<h3>Due soon (${list.length})</h3>`+(list.length?list.map(b=>`<div class="reminder-item">${esc(b.due)} · <strong>${esc(b.name)}</strong> · ${money(b.amount)} ${b.autopay?'· Autopay':''}</div>`).join(''):'<p>No upcoming bills in your reminder window.</p>')+`<h3>Overdue in the last 3 months (${overdue.length})</h3>`+(overdue.length?overdue.map(b=>`<div class="reminder-item">${esc(b.due)} · <strong>${esc(b.name)}</strong> · ${money(b.amount)}</div>`).join(''):'<p>No overdue bills found.</p>');
+}
+
 function exportData(){const backup={version:3,bills,payments};const url=URL.createObjectURL(new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='my-bills-cloud-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000)}
 function importData(e){const f=e.target.files[0];e.target.value='';if(!f||!currentUser)return;const r=new FileReader();r.onload=async()=>{try{const data=JSON.parse(r.result),incoming=Array.isArray(data)?data:data.bills;if(!Array.isArray(incoming)||!incoming.every(b=>b&&typeof b.name==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(b.due)))throw Error('Invalid backup');if(!confirm('Add these '+incoming.length+' bills to your cloud account? Bills with matching IDs will be updated.'))return;await mutate(async()=>{const rows=incoming.map(b=>cloudBill({...b,id:String(b.id||uid()),method:b.method||'',frequency:allowed.has(b.frequency)?b.frequency:'Monthly'}));if(rows.length)assertOk(await db.from('bills').upsert(rows,{onConflict:'id'}));const old=bills;bills=[...old,...incoming];const records=Object.entries(Array.isArray(data)?{}:data.payments||{}).filter(([k])=>bills.some(b=>b.id===k.split('|')[0])).map(([k,v])=>cloudPayment(k,v));bills=old;if(records.length)assertOk(await db.from('bill_payments').upsert(records,{onConflict:'bill_id,due_date'}))})}catch(err){alert('Import failed: '+err.message)}};r.readAsText(f)}
 $('month').value=monthNow();render();initialize();
